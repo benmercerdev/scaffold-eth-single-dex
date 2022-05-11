@@ -4,6 +4,8 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "hardhat/console.sol";
+
 
 /**
  * @title DEX Template
@@ -68,11 +70,63 @@ contract DEX {
      * @notice returns yOutput, or yDelta for xInput (or xDelta)
      * @dev Follow along with the [original tutorial](https://medium.com/@austin_48503/%EF%B8%8F-minimum-viable-exchange-d84f30bd0c90) Price section for an understanding of the DEX's pricing model and for a price function to add to your contract. You may need to update the Solidity syntax (e.g. use + instead of .add, * instead of .mul, etc). Deploy when you are done.
      */
-    function price(
+    // function price(
+    //     uint256 xInput,
+    //     uint256 xReserves,
+    //     uint256 yReserves
+    // ) public view returns (uint256 yOutput) {
+    //     // how much you'll get for x amount of X
+    //     // console.log("xReserves = ", xReserves);
+    //     // console.log("yReserves = ", yReserves);
+    //     // console.log("xInput = ", xInput);
+
+    //     uint256 xInputMinusFee = xInput.mul(997).div(1000);
+    //     // console.log("xInputMinusFee =", xInputMinusFee);
+
+    //     // current k
+    //     uint256 k = xReserves.mul(yReserves);
+    //     // console.log("K = ", k);
+        
+    //     // uint postX = xReserves + xInputMinusFee;
+    //     // console.log("postX = ", postX);
+
+    //     // the amount of y that needs to remain in order to keep the k constant
+    //     uint yRemaining = (k / (xReserves + xInputMinusFee));
+
+    //    // console.log("yremaining = ", yRemaining);
+
+    //     // the difference between what's currently in the reserves and what needs to remain to keep K constant
+    //     yOutput = yReserves - yRemaining; 
+
+    //     return yOutput;
+
+    // }
+
+function price(
         uint256 xInput,
         uint256 xReserves,
         uint256 yReserves
-    ) public view returns (uint256 yOutput) {}
+    ) public view returns (uint256 yOutput) {
+        uint256 xInputWithFee = xInput.mul(997);
+        uint256 numerator = xInputWithFee.mul(yReserves);
+        uint256 denominator = (xReserves.mul(1000)).add(xInputWithFee);
+        return (numerator / denominator);
+    }
+
+
+    //  function price3(
+    //     uint256 xInput,
+    //     uint256 xReserves,
+    //     uint256 yReserves
+    // ) public view returns (uint256 yOutput) {
+        
+    //     uint256 k = xReserves * yReserves;
+
+    //     uint256 xInputWithFee = xInput.mul(997);
+    //     // uint256 numerator = xInputWithFee.mul(yReserves);
+    //     uint256 denominator = (xReserves.mul(1000)).add(xInputWithFee);
+    //     return (k / denominator);
+    // }
 
     /**
      * @notice returns liquidity for a user. Note this is not needed typically due to the `liquidity()` mapping variable being public and having a getter as a result. This is left though as it is used within the front end code (App.jsx).
@@ -84,12 +138,23 @@ contract DEX {
     /**
      * @notice sends Ether to DEX in exchange for $BAL
      */
-    function ethToToken() public payable returns (uint256 tokenOutput) {}
+    function ethToToken() public payable returns (uint256 tokenOutput) {
+      uint256 amountToSwap = price(msg.value, address(this).balance, token.balanceOf(address(this)));
+      console.log("Amount to swap =", amountToSwap);
+      token.transfer(msg.sender, amountToSwap);
+      return amountToSwap;
+
+    }
 
     /**
      * @notice sends $BAL tokens to DEX in exchange for Ether
      */
-    function tokenToEth(uint256 tokenInput) public returns (uint256 ethOutput) {}
+    function tokenToEth(uint256 tokenInput) public returns (uint256 ethOutput) {
+      uint amountToSwap = price(tokenInput, token.balanceOf(address(this)), address(this).balance);
+      (bool send, bytes memory data) = payable(msg.sender).call{value: amountToSwap}("");
+      return amountToSwap;
+
+    }
 
     /**
      * @notice allows deposits of $BAL and $ETH to liquidity pool
