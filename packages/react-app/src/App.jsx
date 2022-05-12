@@ -376,16 +376,6 @@ function App(props) {
             startBlock={1}
           />
 
-          <Events
-            contracts={readContracts}
-            contractName="Balloons"
-            eventName="Approved"
-            localProvider={localProvider}
-            mainnetProvider={mainnetProvider}
-            startBlock={1}
-          />
-        </Route>
-        }
         <Route exact path="/debug">
           {/*
                 🎛 this scaffolding is full of commonly used components

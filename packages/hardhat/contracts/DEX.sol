@@ -27,12 +27,12 @@ contract DEX {
     /**
      * @notice Emitted when ethToToken() swap transacted
      */
-    event EthToTokenSwap();
+    event EthToTokenSwap(address swapper, uint ethAmount, uint tokenAmount);
 
     /**
      * @notice Emitted when tokenToEth() swap transacted
      */
-    event TokenToEthSwap();
+    event TokenToEthSwap(address swapper, uint ethAmount, uint tokenAmount);
 
     /**
      * @notice Emitted when liquidity provided to DEX and mints LPTs.
@@ -42,7 +42,7 @@ contract DEX {
     /**
      * @notice Emitted when liquidity removed from DEX and decreases LPT count within DEX.
      */
-    event LiquidityRemoved();
+    event LiquidityRemoved(address withdrawer, uint lpAmount, uint ethReturned, uint tokenReturned);
 
     /* ========== CONSTRUCTOR ========== */
 
@@ -126,8 +126,8 @@ function price(
      */
     function ethToToken() public payable returns (uint256 tokenOutput) {
       uint256 amountToSwap = price(msg.value, address(this).balance, token.balanceOf(address(this)));
-      console.log("Amount to swap =", amountToSwap);
       token.transfer(msg.sender, amountToSwap);
+      emit EthToTokenSwap(msg.sender, msg.value, amountToSwap);
       return amountToSwap;
 
     }
@@ -138,6 +138,7 @@ function price(
     function tokenToEth(uint256 tokenInput) public returns (uint256 ethOutput) {
       uint256 amountToSwap = price(tokenInput, token.balanceOf(address(this)), address(this).balance);
       (bool send, bytes memory data) = payable(msg.sender).call{value: amountToSwap}("");
+      emit TokenToEthSwap(msg.sender, amountToSwap, tokenInput);
       return amountToSwap;
 
     }
@@ -196,5 +197,25 @@ function price(
      * @notice allows withdrawal of $BAL and $ETH from liquidity pool
      * NOTE: with this current code, the msg caller could end up getting very little back if the liquidity is super low in the pool. I guess they could see that with the UI.
      */
-    function withdraw(uint256 amount) public returns (uint256 eth_amount, uint256 token_amount) {}
+    function withdraw(uint256 amount) public returns (uint256 eth_amount, uint256 token_amount) {
+      
+
+      uint ethToReturn = amount.mul(address(this).balance) / totalLiquidity;
+      uint tokenToReturn = ethToReturn.mul(token.balanceOf(address(this))) / address(this).balance;
+
+      // amount of eth is the "price of 
+      totalLiquidity -= amount;
+      liquidity[msg.sender] -= amount;
+      
+      (bool send, bytes memory data) = payable(msg.sender).call{value: ethToReturn}("");
+      token.transfer(msg.sender, tokenToReturn);
+
+      emit LiquidityRemoved(msg.sender, amount, ethToReturn, tokenToReturn );
+      
+      return (ethToReturn, tokenToReturn);
+      
+      
+
+
+    }
 }
