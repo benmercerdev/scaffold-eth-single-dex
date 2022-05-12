@@ -37,7 +37,7 @@ contract DEX {
     /**
      * @notice Emitted when liquidity provided to DEX and mints LPTs.
      */
-    event LiquidityProvided();
+    event LiquidityProvided(address depositer, uint ethAmount, uint tokenAmount, uint liquidityMinted);
 
     /**
      * @notice Emitted when liquidity removed from DEX and decreases LPT count within DEX.
@@ -153,12 +153,18 @@ function price(
       uint256 tokenReserve = token.balanceOf(address(this));
       
       // calculate how much LP the msg.sender should receive
-      uint256 liquidityPrice = totalLiquidity.div(ethReserve);
-      uint256 liquidityMinted = msg.value.mul(liquidityPrice);
+      // LP per eth price
+      // uint256 liquidityPrice = totalLiquidity.div(ethReserve);
+      // uint256 liquidityMinted = msg.value.mul(liquidityPrice);
       
-      //calculate how much token 
-      uint256 currentRatio = tokenReserve.div(ethReserve);
-      uint256 amountToTransfer = msg.value.mul(currentRatio);
+      // calculated by multiplying the eth by the "price of liquidity" or liquidity per eth in the contract
+      uint256 liquidityMinted = msg.value.mul(totalLiquidity) / ethReserve;
+
+
+      //calculate how much token to transfer, this amount should have the same ratio of the current reserves
+      // uint256 currentRatio = tokenReserve.div(ethReserve);
+      // uint256 amountToTransfer = msg.value.mul(currentRatio); 
+      uint256 amountToTransfer = msg.value.mul(tokenReserve) / ethReserve;
     
       
       
@@ -166,23 +172,26 @@ function price(
       liquidity[msg.sender] += liquidityMinted;
       totalLiquidity += liquidityMinted;
 
+      emit LiquidityProvided(msg.sender, liquidityMinted, msg.value, amountToTransfer);
+
+      return amountToTransfer;
 
     }
 
-    function deposit() public payable returns (uint256 tokensDeposited) {
-        uint256 ethReserve = address(this).balance.sub(msg.value);
-        uint256 tokenReserve = token.balanceOf(address(this));
-        uint256 tokenDeposit;
+    // function deposit() public payable returns (uint256 tokensDeposited) {
+    //     uint256 ethReserve = address(this).balance.sub(msg.value);
+    //     uint256 tokenReserve = token.balanceOf(address(this));
+    //     uint256 tokenDeposit;
 
-        tokenDeposit = (msg.value.mul(tokenReserve) / ethReserve).add(1);
-        uint256 liquidityMinted = msg.value.mul(totalLiquidity) / ethReserve;
-        liquidity[msg.sender] = liquidity[msg.sender].add(liquidityMinted);
-        totalLiquidity = totalLiquidity.add(liquidityMinted);
+    //     tokenDeposit = (msg.value.mul(tokenReserve) / ethReserve).add(1);
+    //     uint256 liquidityMinted = msg.value.mul(totalLiquidity) / ethReserve;
+    //     liquidity[msg.sender] = liquidity[msg.sender].add(liquidityMinted);
+    //     totalLiquidity = totalLiquidity.add(liquidityMinted);
 
-        require(token.transferFrom(msg.sender, address(this), tokenDeposit));
-        emit LiquidityProvided(msg.sender, liquidityMinted, msg.value, tokenDeposit);
-        return tokenDeposit;
-    }
+    //     require(token.transferFrom(msg.sender, address(this), tokenDeposit));
+    //     emit LiquidityProvided(msg.sender, liquidityMinted, msg.value, tokenDeposit);
+    //     return tokenDeposit;
+    // }
     /**
      * @notice allows withdrawal of $BAL and $ETH from liquidity pool
      * NOTE: with this current code, the msg caller could end up getting very little back if the liquidity is super low in the pool. I guess they could see that with the UI.
