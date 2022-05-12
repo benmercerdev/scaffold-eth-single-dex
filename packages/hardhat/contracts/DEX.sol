@@ -19,8 +19,8 @@ contract DEX {
 
     using SafeMath for uint256; //outlines use of SafeMath for uint256 variables
     IERC20 token; //instantiates the imported contract
-    uint public totalLiquidity;
-    mapping (address => uint) public liquidity;
+    uint256 public totalLiquidity;
+    mapping (address => uint256) public liquidity;
 
     /* ========== EVENTS ========== */
 
@@ -87,11 +87,11 @@ contract DEX {
     //     uint256 k = xReserves.mul(yReserves);
     //     // console.log("K = ", k);
         
-    //     // uint postX = xReserves + xInputMinusFee;
+    //     // uint256 postX = xReserves + xInputMinusFee;
     //     // console.log("postX = ", postX);
 
     //     // the amount of y that needs to remain in order to keep the k constant
-    //     uint yRemaining = (k / (xReserves + xInputMinusFee));
+    //     uint256 yRemaining = (k / (xReserves + xInputMinusFee));
 
     //    // console.log("yremaining = ", yRemaining);
 
@@ -150,7 +150,7 @@ function price(
      * @notice sends $BAL tokens to DEX in exchange for Ether
      */
     function tokenToEth(uint256 tokenInput) public returns (uint256 ethOutput) {
-      uint amountToSwap = price(tokenInput, token.balanceOf(address(this)), address(this).balance);
+      uint256 amountToSwap = price(tokenInput, token.balanceOf(address(this)), address(this).balance);
       (bool send, bytes memory data) = payable(msg.sender).call{value: amountToSwap}("");
       return amountToSwap;
 
@@ -162,7 +162,39 @@ function price(
      * NOTE: user has to make sure to give DEX approval to spend their tokens on their behalf by calling approve function prior to this function call.
      * NOTE: Equal parts of both assets will be removed from the user's wallet with respect to the price outlined by the AMM.
      */
-    function deposit() public payable returns (uint256 tokensDeposited) {}
+    function deposit() public payable returns (uint256 tokensDeposited) {
+      uint256 ethReserve = address(this).balance.sub(msg.value);
+      uint256 tokenReserve = token.balanceOf(address(this));
+      uint256 currentRatio = tokenReserve.div(ethReserve);
+      
+      // amount of token to deposit,based on the current ration of eth to token and the 
+      uint256 tokenDeposit = msg.value.mul(currentRatio).add(1);
+
+      // 1/1 liquidity, add one eth, 1
+      // 2/1 liquidity, add one eth, 2 
+      uint256 liquidityMinted = msg.value.mul(totalLiquidity) / ethReserve;
+
+
+
+
+      token.transferFrom(msg.sender, address(this), amountOfTokenNeeded);
+
+
+    }
+
+    function deposit() public payable returns (uint256 tokensDeposited) {
+        uint256 ethReserve = address(this).balance.sub(msg.value);
+        uint256 tokenReserve = token.balanceOf(address(this));
+        uint256 tokenDeposit;
+
+        tokenDeposit = (msg.value.mul(tokenReserve) / ethReserve).add(1);
+        uint256 liquidityMinted = msg.value.mul(totalLiquidity) / ethReserve;
+        liquidity[msg.sender] = liquidity[msg.sender].add(liquidityMinted);
+        totalLiquidity = totalLiquidity.add(liquidityMinted);
+
+        require(token.transferFrom(msg.sender, address(this), tokenDeposit));
+        emit LiquidityProvided(msg.sender, liquidityMinted, msg.value, tokenDeposit);
+        return tokenDeposit;
 
     /**
      * @notice allows withdrawal of $BAL and $ETH from liquidity pool
