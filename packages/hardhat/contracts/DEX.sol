@@ -114,20 +114,6 @@ function price(
     }
 
 
-    //  function price3(
-    //     uint256 xInput,
-    //     uint256 xReserves,
-    //     uint256 yReserves
-    // ) public view returns (uint256 yOutput) {
-        
-    //     uint256 k = xReserves * yReserves;
-
-    //     uint256 xInputWithFee = xInput.mul(997);
-    //     // uint256 numerator = xInputWithFee.mul(yReserves);
-    //     uint256 denominator = (xReserves.mul(1000)).add(xInputWithFee);
-    //     return (k / denominator);
-    // }
-
     /**
      * @notice returns liquidity for a user. Note this is not needed typically due to the `liquidity()` mapping variable being public and having a getter as a result. This is left though as it is used within the front end code (App.jsx).
      */
@@ -165,19 +151,20 @@ function price(
     function deposit() public payable returns (uint256 tokensDeposited) {
       uint256 ethReserve = address(this).balance.sub(msg.value);
       uint256 tokenReserve = token.balanceOf(address(this));
-      uint256 currentRatio = tokenReserve.div(ethReserve);
       
-      // amount of token to deposit,based on the current ration of eth to token and the 
-      uint256 tokenDeposit = msg.value.mul(currentRatio).add(1);
-
-      // 1/1 liquidity, add one eth, 1
-      // 2/1 liquidity, add one eth, 2 
-      uint256 liquidityMinted = msg.value.mul(totalLiquidity) / ethReserve;
-
-
-
-
-      token.transferFrom(msg.sender, address(this), amountOfTokenNeeded);
+      // calculate how much LP the msg.sender should receive
+      uint256 liquidityPrice = totalLiquidity.div(ethReserve);
+      uint256 liquidityMinted = msg.value.mul(liquidityPrice);
+      
+      //calculate how much token 
+      uint256 currentRatio = tokenReserve.div(ethReserve);
+      uint256 amountToTransfer = msg.value.mul(currentRatio);
+    
+      
+      
+      token.transferFrom(msg.sender, address(this), amountToTransfer);
+      liquidity[msg.sender] += liquidityMinted;
+      totalLiquidity += liquidityMinted;
 
 
     }
@@ -195,7 +182,7 @@ function price(
         require(token.transferFrom(msg.sender, address(this), tokenDeposit));
         emit LiquidityProvided(msg.sender, liquidityMinted, msg.value, tokenDeposit);
         return tokenDeposit;
-
+    }
     /**
      * @notice allows withdrawal of $BAL and $ETH from liquidity pool
      * NOTE: with this current code, the msg caller could end up getting very little back if the liquidity is super low in the pool. I guess they could see that with the UI.
