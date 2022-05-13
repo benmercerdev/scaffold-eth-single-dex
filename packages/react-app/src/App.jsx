@@ -28,7 +28,6 @@ import {
   Dex,
   Address,
   Balance,
-  Events,
 } from "./components";
 import { NETWORKS, ALCHEMY_KEY } from "./constants";
 import externalContracts from "./contracts/external_contracts";
@@ -326,7 +325,16 @@ function App(props) {
           </div> */}
         </Route>
         <Route path="/Events">
-          <Events
+        <SmartEvents
+            contracts={readContracts}
+            contractName="DEX"
+            eventName="TesterEvent"
+            titleHeader=" Owner | Spender | Value$$"
+            localProvider={localProvider}
+            mainnetProvider={mainnetProvider}
+            startBlock={1}
+          />
+          <SmartEvents
             contracts={readContracts}
             contractName="DEX"
             eventName="EthToTokenSwap"
@@ -335,7 +343,7 @@ function App(props) {
             startBlock={1}
           />
 
-          <Events
+          <SmartEvents
             contracts={readContracts}
             contractName="DEX"
             eventName="TokenToEthSwap"
@@ -344,7 +352,7 @@ function App(props) {
             startBlock={1}
           />
 
-          <Events
+          <SmartEvents
             contracts={readContracts}
             contractName="DEX"
             eventName="LiquidityProvided"
@@ -353,20 +361,10 @@ function App(props) {
             startBlock={1}
           />
 
-          <Events
+          <SmartEvents
             contracts={readContracts}
             contractName="DEX"
             eventName="LiquidityRemoved"
-            localProvider={localProvider}
-            mainnetProvider={mainnetProvider}
-            startBlock={1}
-          />
-
-
-<Events
-            contracts={readContracts}
-            contractName="Balloons"
-            eventName="Approval"
             localProvider={localProvider}
             mainnetProvider={mainnetProvider}
             startBlock={1}

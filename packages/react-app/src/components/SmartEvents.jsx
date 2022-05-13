@@ -2,11 +2,13 @@ import { List } from "antd";
 import { useEventListener } from "eth-hooks/events/useEventListener";
 import { Address, TokenBalance } from "../components";
 import { ethers } from "ethers";
+import { Skeleton, Typography } from "antd";
 
 /*
   ~ What it does? ~
 
   Displays a lists of events
+  Smartly displays based on type (eth address, token balance, other (renders as string))
 
   ~ How can I use? ~
 
@@ -14,7 +16,7 @@ import { ethers } from "ethers";
     contracts={readContracts}
     contractName="YourContract"
     eventName="SetPurpose"
-
+    argTitles="Owner | Spender | Value"
     localProvider={localProvider}
     mainnetProvider={mainnetProvider}
     startBlock={1}
@@ -46,15 +48,13 @@ export default function SmartEvents({
           return (
             <List.Item key={item.blockNumber + "_" + item.args[0].toString()}>
               {item.args.map(arg => {
-                console.log(arg);
-                console.log(typeof arg);
-                if (ethers.utils.isAddress(arg)) {
-                  return <Address address={arg} ensProvider={mainnetProvider} fontSize={16} />;
-                } else if (arg._isBigNumber) {
-                  return <TokenBalance balance={arg} provider={localProvider} />;
-                } else {
-                  return `${arg.toString()}`;
-                }
+                return ethers.utils.isAddress(arg) ? (
+                  <Address address={arg} ensProvider={mainnetProvider} fontSize={16} />
+                ) : arg._isBigNumber ? (
+                  <TokenBalance balance={arg} provider={localProvider} />
+                ) : (
+                  <Typography>`${arg.toString()}`</Typography>
+                );
               })}
             </List.Item>
           );
