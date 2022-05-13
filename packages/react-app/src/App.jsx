@@ -12,6 +12,7 @@ import { useExchangeEthPrice } from "eth-hooks/dapps/dex";
 import React, { useCallback, useEffect, useState } from "react";
 import { Link, Route, Switch, useLocation } from "react-router-dom";
 import "./App.css";
+import SmartEvents from "./components/SmartEvents";
 import {
   Account,
   Contract,
@@ -366,6 +367,16 @@ function App(props) {
             contracts={readContracts}
             contractName="Balloons"
             eventName="Approval"
+            localProvider={localProvider}
+            mainnetProvider={mainnetProvider}
+            startBlock={1}
+          />
+
+<SmartEvents
+            contracts={readContracts}
+            contractName="Balloons"
+            eventName="Approval"
+            titleHeader=" Owner | Spender | Value$$"
             localProvider={localProvider}
             mainnetProvider={mainnetProvider}
             startBlock={1}
