@@ -3,7 +3,6 @@ import { useEventListener } from "eth-hooks/events/useEventListener";
 import { Address, TokenBalance } from "../components";
 import { ethers } from "ethers";
 
-
 /*
   ~ What it does? ~
 
@@ -47,10 +46,14 @@ export default function SmartEvents({
           return (
             <List.Item key={item.blockNumber + "_" + item.args[0].toString()}>
               {item.args.map(arg => {
+                console.log(arg);
+                console.log(typeof arg);
                 if (ethers.utils.isAddress(arg)) {
                   return <Address address={arg} ensProvider={mainnetProvider} fontSize={16} />;
-                } else {
+                } else if (arg._isBigNumber) {
                   return <TokenBalance balance={arg} provider={localProvider} />;
+                } else {
+                  return `${arg.toString()}`;
                 }
               })}
             </List.Item>
