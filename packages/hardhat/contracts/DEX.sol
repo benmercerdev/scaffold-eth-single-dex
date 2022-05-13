@@ -126,6 +126,8 @@ function price(
      */
     function ethToToken() public payable returns (uint256 tokenOutput) {
       uint256 amountToSwap = price(msg.value, address(this).balance, token.balanceOf(address(this)));
+     
+      //  transfer the Token
       token.transfer(msg.sender, amountToSwap);
       emit EthToTokenSwap(msg.sender, msg.value, amountToSwap);
       return amountToSwap;
@@ -137,7 +139,13 @@ function price(
      */
     function tokenToEth(uint256 tokenInput) public returns (uint256 ethOutput) {
       uint256 amountToSwap = price(tokenInput, token.balanceOf(address(this)), address(this).balance);
+      
+      // take the token
+      require(token.transferFrom(msg.sender, address(this), tokenInput), "transfer of token failed");
+     
+      // return eth
       (bool send, bytes memory data) = payable(msg.sender).call{value: amountToSwap}("");
+     
       emit TokenToEthSwap(msg.sender, amountToSwap, tokenInput);
       return amountToSwap;
 

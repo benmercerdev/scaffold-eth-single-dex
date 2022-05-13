@@ -376,6 +376,17 @@ function App(props) {
             startBlock={1}
           />
 
+
+<Events
+            contracts={readContracts}
+            contractName="Balloons"
+            eventName="Approval"
+            localProvider={localProvider}
+            mainnetProvider={mainnetProvider}
+            startBlock={1}
+          />
+        </Route>
+        
         <Route exact path="/debug">
           {/*
                 🎛 this scaffolding is full of commonly used components
@@ -447,14 +458,7 @@ function App(props) {
             />
             */}
         </Route>
-        <Route path="/subgraph">
-          <Subgraph
-            subgraphUri={props.subgraphUri}
-            tx={tx}
-            writeContracts={writeContracts}
-            mainnetProvider={mainnetProvider}
-          />
-        </Route>
+       
       </Switch>
 
       <ThemeSwitch />
