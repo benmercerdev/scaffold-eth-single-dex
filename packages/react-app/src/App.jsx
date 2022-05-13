@@ -325,15 +325,6 @@ function App(props) {
           </div> */}
         </Route>
         <Route path="/Events">
-        <SmartEvents
-            contracts={readContracts}
-            contractName="DEX"
-            eventName="TesterEvent"
-            titleHeader=" Owner | Spender | Value$$"
-            localProvider={localProvider}
-            mainnetProvider={mainnetProvider}
-            startBlock={1}
-          />
           <SmartEvents
             contracts={readContracts}
             contractName="DEX"
